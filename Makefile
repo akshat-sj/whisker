@@ -2,34 +2,44 @@
 # $< = first dependency
 # $^ = all dependencies
 
+# Directories
+SRC_DIR := kernel
+BOOT_DIR := boot
+BUILD_DIR := build
+
 # First rule is the one executed when no parameters are fed to the Makefile
-all: run
+all: $(BUILD_DIR)/os-image.bin
 
 # Notice how dependencies are built as needed
-kernel.bin: kernel_entry.o kernel.o
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel_entry.o $(BUILD_DIR)/kernel.o
 	ld -m elf_i386 -o $@ -Ttext 0x1000 $^ --oformat binary
 
-kernel_entry.o: kernel_entry.asm
+$(BUILD_DIR)/kernel_entry.o: $(SRC_DIR)/kernel_entry.asm
 	nasm $< -f elf -o $@
 
-kernel.o: kernel.c
+$(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.c
 	gcc -fno-pie -m32 -ffreestanding -c $< -o $@
 
 # Disassemble
-kernel.dis: kernel.bin
+$(BUILD_DIR)/kernel.dis: $(BUILD_DIR)/kernel.bin
 	ndisasm -b 32 $< > $@
 
-mbr.bin: mbr.asm
+$(BUILD_DIR)/boot.bin: $(BOOT_DIR)/boot.asm
 	nasm $< -f bin -o $@
 
-os-image.bin: mbr.bin kernel.bin
+$(BUILD_DIR)/os-image.bin: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/kernel.bin
 	cat $^ > $@
 
-run: os-image.bin
+run: $(BUILD_DIR)/os-image.bin
 	qemu-system-i386 -fda $<
 
-echo: os-image.bin
+echo: $(BUILD_DIR)/os-image.bin
 	xxd $<
 
 clean:
-	$(RM) *.bin *.o *.dis
+	$(RM) $(BUILD_DIR)/*.bin $(BUILD_DIR)/*.o $(BUILD_DIR)/*.dis
+
+
+
+
+
