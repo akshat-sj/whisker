@@ -2,10 +2,15 @@
 [org 0x7c00]
 
 KERNEL_OFFSET equ 0x1000 ; The same one we used when linking the kernel
+BOOT_DRIVE db 0 
+STACK_START equ 0x9000 
+
+
+mov bp, STACK_START
+mov sp, bp
+
 
 mov [BOOT_DRIVE], dl ; Remember that the BIOS sets us the boot drive in 'dl' on boot
-mov bp, 0x9000
-mov sp, bp
 
 call load_kernel ; read the kernel from disk
 call switch_to_32bit ; disable interrupts, load GDT,  etc. Finally jumps to 'BEGIN_PM'
@@ -26,8 +31,7 @@ BEGIN_32BIT:
     call KERNEL_OFFSET ; Give control to the kernel
     jmp $ ; Stay here when the kernel returns control to us (if ever)
 
-
-BOOT_DRIVE db 0 ; It is a good idea to store it in memory because 'dl' may get overwritten
+;It is a good idea to store it in memory because 'dl' may get overwritten
 
 ; load 'dh' sectors from drive 'dl' into ES:BX
 disk_load:
