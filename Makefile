@@ -2,37 +2,39 @@
 # $< = first dependency
 # $^ = all dependencies
 
-SRC_DIR := kernel
-BOOT_DIR := boot
-BUILD_DIR := build
+# detect all .o files based on their .c source
+C_SOURCES = $(wildcard kernel/*.c utils/*.c drivers/*.c)
+HEADERS = $(wildcard kernel/*.h utils/*.h  drivers/*.h)
+OBJ_FILES = ${C_SOURCES:.c=.o}
 
-all: $(BUILD_DIR)/os-image.bin
+# First rule is the one executed when no parameters are fed to the Makefile
+all: run
 
-$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel_entry.o $(BUILD_DIR)/kernel.o
+# Notice how dependencies are built as needed
+kernel.bin: boot/kernel_entry.o ${OBJ_FILES}
 	ld -m elf_i386 -o $@ -Ttext 0x1000 $^ --oformat binary
 
-$(BUILD_DIR)/kernel_entry.o: $(SRC_DIR)/kernel_entry.asm
-	nasm $< -f elf -o $@
-
-$(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.c
-	gcc -fno-pie -m32 -ffreestanding -c $< -o $@
-
-$(BUILD_DIR)/kernel.dis: $(BUILD_DIR)/kernel.bin
-	ndisasm -b 32 $< > $@
-
-$(BUILD_DIR)/boot.bin: $(BOOT_DIR)/boot.asm
-	nasm $< -f bin -o $@
-
-$(BUILD_DIR)/os-image.bin: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/kernel.bin
+os-image.bin: boot/boot.bin kernel.bin
 	cat $^ > $@
 
-run: $(BUILD_DIR)/os-image.bin
+run: os-image.bin
 	qemu-system-i386 -fda $<
 
+%.o: %.c ${HEADERS}
+	gcc -g -fno-pie -m32 -ffreestanding -c $< -o $@ # -g for debugging
+
+%.o: %.asm
+	nasm $< -f elf -o $@
+
+%.bin: %.asm
+	nasm $< -f bin -o $@
+
+%.dis: %.bin
+	ndisasm -b 32 $< > $@
+
 clean:
-	$(RM) $(BUILD_DIR)/*.bin $(BUILD_DIR)/*.o $(BUILD_DIR)/*.dis
-
-
-
-
-
+	$(RM) *.bin *.o *.dis *.elf
+	$(RM) kernel/*.o
+	$(RM) boot/*.o boot/*.bin
+	$(RM) drivers/*.o
+	$(RM) utils/*.o 

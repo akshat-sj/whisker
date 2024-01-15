@@ -1,3 +1,7 @@
+; 
+
+
+
 gdt_start: ; don't remove the labels, they're needed to compute sizes and jumps
     ; the GDT starts with a null 8-byte
     dq 0x0 ; 8 byte 
