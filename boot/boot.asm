@@ -105,14 +105,15 @@ switch_to_32bit:
 
 [bits 32] ; 32 bit directive 
 init_32bit: 
-    mov ax, DATA_SEG 
+    mov ax, DATA_SEG ; now because we are in protexted mode our old segments are useless
+                     ; we point our segment registers to data selector in gdt 
     mov ds, ax
     mov ss, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
 
-    mov ebp, 0x90000 
+    mov ebp, 0x90000 ;update stakc pointer 
     mov esp, ebp
 
     call begin_32bit

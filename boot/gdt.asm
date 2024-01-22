@@ -1,7 +1,12 @@
-; 
-
-
-
+; segmentation is a memory protection model we use to access memory more easily 
+; Segment descriptor has - 
+; The base address of the segment
+; The default operation size in the segment (16-bit/32-bit)
+; The privilege level of the descriptor (Ring 0 -> Ring 3)
+; The granularity (Segment limit is in byte/4kb units)
+; The segment limit (The maximum legal offset within the segment)
+; The segment presence (Is it present or not)
+; The descriptor type (0 = system; 1 = code/data)
 gdt_start: ; don't remove the labels, they're needed to compute sizes and jumps
     ; the GDT starts with a null 8-byte
     dq 0x0 ; 8 byte 
@@ -14,6 +19,7 @@ gdt_code:
     db 10011010b ; flags (8 bits)
     db 11001111b ; flags (4 bits) + segment length, bits 16-19
     db 0x0       ; segment base, bits 24-31
+
 
 ; GDT for data segment. base and length identical to code segment
 ; some flags changed, again, refer to os-dev.pdf
